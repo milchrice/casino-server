@@ -1,23 +1,21 @@
-const express = require('express'); // express module to create a server application
-const cors = require('cors'); // cors module to handle Preflight requests
-const bodyParser = require('body-parser'); // body-parser module to parse JSON objects
-const fs = require('fs'); // fs library to read and write files
+const express = require('express'); 
+const cors = require('cors'); 
+const bodyParser = require('body-parser');
+const fs = require('fs');
 
-const app = express(); // instance of an Express object
-const port = 3000; // the port the server will be listening on
+const app = express(); 
+const port = 3000; 
 const textBodyParser = bodyParser.text({ limit: '20mb', defaultCharset: 'utf-8'});
 
-// import our custom modules here:
 const { authenticateUser } = require('./my_modules/login.js');
 const { getRandomInt, 
     getRouletteSlice, 
     readCsvFile, 
-    parseObjToCsvString,
     getReward,
     addUser } = require('./my_modules/utility.js');
 
 app.use(cors({
-    origin: 'http://localhost:5000' // enable CORS for localhost:3000
+    origin: 'http://localhost:5000' 
 }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -25,22 +23,21 @@ app.use(bodyParser.json());
 
 app.options('/login', (req, res) => {
     res.header('Access-Control-Allow-Origin', 'http://localhost:5000');
-    res.header('Access-Control-Allow-Headers', 'task'); // Allow the 'task 'header
-    res.header('Access-Control-Allow-Methods', 'GET'); // Allow the GET method
-    res.header('Access-Control-Allow-Methods', 'POST'); // Allow the POST method
+    res.header('Access-Control-Allow-Headers', 'task'); 
+    res.header('Access-Control-Allow-Methods', 'GET'); 
+    res.header('Access-Control-Allow-Methods', 'POST'); 
     res.sendStatus(200);
 });
 
 app.get('/login', textBodyParser, async function (req, res) {
-    // print the HTTP Request Headers
+
     console.log('req.headers: ', req.headers); 
 
-    const reqOrigin = req.headers['origin']; // get the origin of the request
-    const reqTask = req.headers['task']; // get the task of the request
+    const reqOrigin = req.headers['origin'];
+    const reqTask = req.headers['task']; 
 
     console.log("Processing request from " + reqOrigin + " for route " + req.url + " with method " + req.method + " for task: " + reqTask);
 
-    // TASK Check
     if (reqTask === 'login') {
         try {
             const loginResult = await authenticateUser(req);
@@ -48,13 +45,11 @@ app.get('/login', textBodyParser, async function (req, res) {
 
             if (loginResult == true) {
                 res.setHeader('Access-Control-Allow-Origin', '*');
-                // allow client to access the custom 'request-result' header:
                 res.setHeader('Access-Control-Expose-Headers', 'request-result'); 
-                // set the custom header 'request-result'
                 res.setHeader('request-result', 'Request ' + req.method + ' was received successfully.');
                 res.status(200).send("Login Successful");
             } else {
-                res.status(403).send("Login Failed"); // 403 Forbidden Access
+                res.status(403).send("Login Failed");
             }
         } catch (error) {
             console.log('authenticateUser() error:', error);
@@ -66,15 +61,13 @@ app.get('/login', textBodyParser, async function (req, res) {
 });
 
 app.get('/home', async function (req, res) {
-    // print the HTTP Request Headers
     console.log('req.headers: ', req.headers); 
 
-    const reqOrigin = req.headers['origin']; // get the origin of the request
-    const reqTask = req.headers['task']; // get the task of the request
+    const reqOrigin = req.headers['origin'];
+    const reqTask = req.headers['task'];
 
     console.log("Processing request from " + reqOrigin + " for route " + req.url + " with method " + req.method + " for task: " + reqTask);
 
-    // TASK Check
     if (reqTask === 'spin-btn') {
         try {
             // get a degree between 0 and 360 at random:
@@ -106,19 +99,17 @@ app.get('/home', async function (req, res) {
 });
 
 app.post('/login', async function (req, res) {
-    // print the HTTP Request Headers
     console.log('req.headers: ', req.headers); 
 
-    const reqOrigin = req.headers['origin']; // get the origin of the request
-    const reqTask = req.headers['task']; // get the task of the request
-    const reqBody = req.body; // get the request data
+    const reqOrigin = req.headers['origin']; 
+    const reqTask = req.headers['task']; 
+    const reqBody = req.body; 
 
     console.log("Processing request from " + reqOrigin + " for route " + req.url + " with method " + req.method + " for task: " + reqTask);
     console.log("req.body: ", req.body);
     console.log("req.body.username: ", req.body.username);
     console.log("req.body.password: ", req.body.password);
 
-    // TASK Check
     if (reqTask === 'signup') {
         try {
             const filePath = './data/users.json';
@@ -135,31 +126,28 @@ app.post('/login', async function (req, res) {
 });
 
 app.post('/updateTickets', (req, res) => {
-    const result = req.body.result; // Obtener el resultado del juego (win o lose)
-    const username = req.body.username; // Deberías obtener el nombre de usuario de la sesión actual
+    const result = req.body.result; 
+    const username = req.body.username;
 
-    // Leer el archivo users.json
     const fileData = fs.readFileSync('./data/users.json', 'utf8');
     let users = JSON.parse(fileData);
 
     if (users[username]) {
         if (result === "win") {
-            users[username].tickets += 1; // Incrementar el número de tickets en caso de victoria
+            users[username].tickets += 1; 
         } else if (result === "lose") {
             if (users[username].tickets > 0) {
-                users[username].tickets -= 1; // Reducir el número de tickets en caso de derrota (si hay tickets disponibles)
+                users[username].tickets -= 1; 
             }
         }
 
-        // Actualizar el archivo users.json con los nuevos datos
         fs.writeFileSync('./data/users.json', JSON.stringify(users, null, 2));
 
-        res.send("Tickets actualizados");
+        res.send("Updated Tickets");
     } else {
-        res.status(404).send("Usuario no encontrado");
+        res.status(404).send("Useer not found");
     }
 });
-
 
 app.get('/getUsersData', (req, res) => {
     fs.readFile('./data/users.json', 'utf8', (err, data) => {
@@ -180,13 +168,50 @@ app.post('/writeGameResult', (req, res) => {
 
     fs.appendFile('./data/blackjack.csv', csvLine, (err) => {
         if (err) {
-            console.error("Error al escribir en el archivo CSV: ", err);
-            res.status(500).json({ error: "Error al escribir en el archivo CSV" });
+            console.error("Error writing the CSV: ", err);
+            res.status(500).json({ error: "Error writing the CSV" });
         } else {
-            console.log("Resultado de partida escrito en el archivo CSV");
-            res.status(200).json({ message: "Resultado de partida escrito en el archivo CSV" });
+            console.log("Game result CSV");
+            res.status(200).json({ message: "Game result CSV" });
         }
     });
+});
+
+//DICE GAME----------------------
+app.get('/getDiceRewards', (req, res) => {
+    fs.readFile('./data/dice-rewards.csv', 'utf8', (err, data) => {
+        if (err) {
+            res.status(500).send("Server error");
+            return;
+        }
+
+        const rewardsArray = data.split('\n').slice(1);
+        const rewardsData = rewardsArray.map(line => {
+            const [number, reward] = line.split(', ');
+            return { number: parseInt(number), reward: parseInt(reward) };
+        });
+
+        res.json(rewardsData);
+    });
+});
+
+app.post('/updateUserTickets', (req, res) => {
+    const username = "test"; 
+    const newTickets = req.body.tickets;
+    
+    const fileData = fs.readFileSync('./data/users.json', 'utf8');
+    let users = JSON.parse(fileData);
+  
+    if (users[username]) {
+
+        users[username].tickets = newTickets;
+  
+        fs.writeFileSync('./data/users.json', JSON.stringify(users, null, 2));
+  
+        res.send("Tickets updated");
+    } else {
+        res.status(404).send("User not found");
+    }
 });
 
 // Initialize the Server, and Listen to connection requests

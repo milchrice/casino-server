@@ -1,7 +1,7 @@
 {
-  "qwe": {
-    "password": "qwe",
+  "test": {
+    "password": "123",
     "balance": 10,
-    "tickets": 0
+    "tickets": 15
   }
 }
