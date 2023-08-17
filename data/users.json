@@ -2,6 +2,6 @@
   "test": {
     "password": "123",
     "balance": 10,
-    "tickets": 15
+    "tickets": 5
   }
 }

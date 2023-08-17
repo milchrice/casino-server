@@ -177,6 +177,26 @@ app.post('/writeGameResult', (req, res) => {
     });
 });
 
+app.get('/getGameResults', (req, res) => {
+    fs.readFile('./data/blackjack.csv', 'utf8', (err, data) => {
+        if (err) {
+            res.status(500).send("Server error");
+            return;
+        }
+
+        const lines = data.split('\n');
+        const gameResults = [];
+
+        for (const line of lines) {
+            const [date, time, result] = line.split(',');
+            gameResults.push({ date, time, result });
+        }
+
+        res.json(gameResults);
+    });
+});
+
+
 //DICE GAME----------------------
 app.get('/getDiceRewards', (req, res) => {
     fs.readFile('./data/dice-rewards.csv', 'utf8', (err, data) => {
