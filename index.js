@@ -6,6 +6,8 @@ const fs = require('fs');
 const app = express(); 
 const port = 3000; 
 const textBodyParser = bodyParser.text({ limit: '20mb', defaultCharset: 'utf-8'});
+let accumulatedTickets = 0;
+
 
 const { authenticateUser } = require('./my_modules/login.js');
 const { getRandomInt, 
@@ -15,14 +17,14 @@ const { getRandomInt,
     addUser } = require('./my_modules/utility.js');
 
 app.use(cors({
-    origin: 'http://localhost:5000' 
+    origin: 'http://localhost:5173' 
 }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.options('/login', (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:5000');
+    res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
     res.header('Access-Control-Allow-Headers', 'task'); 
     res.header('Access-Control-Allow-Methods', 'GET'); 
     res.header('Access-Control-Allow-Methods', 'POST'); 
@@ -134,16 +136,16 @@ app.post('/updateTickets', (req, res) => {
 
     if (users[username]) {
         if (result === "win") {
-            users[username].tickets += 1; 
+            users[username].tickets += 10; 
         } else if (result === "lose") {
             if (users[username].tickets > 0) {
-                users[username].tickets -= 1; 
+                users[username].tickets -= 10; 
             }
         }
 
         fs.writeFileSync('./data/users.json', JSON.stringify(users, null, 2));
 
-        res.send("Updated Tickets");
+        res.json({ message: "Updated Tickets" });
     } else {
         res.status(404).send("Useer not found");
     }
@@ -216,15 +218,16 @@ app.get('/getDiceRewards', (req, res) => {
 });
 
 app.post('/updateUserTickets', (req, res) => {
-    const username = "test"; 
+    const username = "player"; 
     const newTickets = req.body.tickets;
+    accumulatedTickets += newTickets;
     
     const fileData = fs.readFileSync('./data/users.json', 'utf8');
     let users = JSON.parse(fileData);
   
     if (users[username]) {
 
-        users[username].tickets = newTickets;
+        users[username].tickets = accumulatedTickets;
   
         fs.writeFileSync('./data/users.json', JSON.stringify(users, null, 2));
   
